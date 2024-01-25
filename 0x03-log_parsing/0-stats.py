@@ -2,37 +2,47 @@
 '''
     A script for parsing HTTP request logs.
 '''
+import sys
 
 
-def print_statistics(total_size, status_code_counts):
-    """print"""
-    print(f"File size: {total_size}")
-    for code in sorted(status_code_counts):
-        print(f"{code}: {status_code_counts[code]}")
+status_codes = {200: 0, 301: 0, 400: 0, 401: 0, 403: 0, 404: 0, 405: 0, 500: 0}
+file_size = 0
+counter = 0
+i = 0
 
 
-line_number = 0
-codes = [200, 301, 400, 401, 403, 404, 405, 500]
-sumAll = 0
-times = []
-n_of_counts = {}
+def print_stats(f_size, status_dict):
+    """prints the log stats"""
+    print('File size: {}'.format(f_size))
+    for key, val in status_dict.items():
+        if val:
+            print('{}: {}'.format(key, val))
+
+
 try:
     for line in sys.stdin:
-        args = line.split()
-        sumAll += int(args[-1])
-        times.append(int(args[-2]))
-        line_number += 1
+        elements = line.split(' ')
+        counter += 1
 
-        if line_number % 10 == 0:
-            for i in sorted(times):
-                if i is None or not isinstance(i, int):
-                    continue
-                if i in n_of_counts and i in codes:
-                    n_of_counts[i] += 1
-                else:
-                    n_of_counts[i] = 1
-            print_statistics(sumAll, n_of_counts)
-            times.clear()
+        try:
+            size = int(elements[-1])
+            stat_code = int(elements[-2])
+        except (IndexError, TypeError, ValueError):
+            continue
+
+        if len(elements) != 9:
+            continue
+
+        if stat_code in status_codes:
+            status_codes[stat_code] += 1
+
+            file_size += size
+        if counter == 10:
+            print_stats(file_size, status_codes)
+            counter = 0
+    if counter > 0:
+        print_stats(file_size, status_codes)
+
 except KeyboardInterrupt:
-    print_statistics(sumAll, n_of_counts)
-    sys.exit(0)
+    print_stats(file_size, status_codes)
+    raise
