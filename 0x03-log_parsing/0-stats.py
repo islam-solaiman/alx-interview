@@ -3,6 +3,7 @@
     A script for parsing HTTP request logs.
 '''
 
+
 def print_statistics(total_size, status_code_counts):
     """print"""
     print(f"File size: {total_size}")
